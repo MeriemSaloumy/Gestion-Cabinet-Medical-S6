@@ -35,3 +35,23 @@ Route::middleware(['auth', 'role:medecin'])->group(function () {
         return view('medecin.dashboard'); // On change ici pour appeler la vue
     })->name('medecin.dashboard');
 });
+
+use App\Http\Controllers\AppointmentController;
+
+// Routes pour le secrétaire
+Route::middleware(['auth'])->prefix('secretaire')->name('secretaire.')->group(function () {
+    Route::get('/appointments', [AppointmentController::class, 'secretaireIndex'])->name('appointments');
+    Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
+    Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+});
+
+// Routes pour le médecin
+Route::middleware(['auth'])->prefix('medecin')->name('medecin.')->group(function () {
+    Route::get('/appointments', [AppointmentController::class, 'medecinIndex'])->name('appointments');
+});
+
+// Routes pour le patient
+Route::middleware(['auth'])->prefix('patient')->name('patient.')->group(function () {
+    Route::get('/appointments', [AppointmentController::class, 'patientIndex'])->name('appointments');
+});
