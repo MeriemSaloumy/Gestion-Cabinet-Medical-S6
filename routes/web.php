@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PatientController; 
+use App\Http\Controllers\ConsultationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -34,4 +36,15 @@ Route::middleware(['auth', 'role:medecin'])->group(function () {
     Route::get('/medecin/dashboard', function () {
         return view('medecin.dashboard'); // On change ici pour appeler la vue
     })->name('medecin.dashboard');
+    Route::resource('patients', PatientController::class);
+
+    Route::resource('consultations', ConsultationController::class);
+
+    Route::get('/consultations/{id}/pdf', [ConsultationController::class, 'generatePDF'])->name('consultations.pdf');
 });
+
+
+
+
+
+

@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('patients', function (Blueprint $table) {
+      Schema::create('patients', function (Blueprint $table) {
         $table->id();
-        $table->string('nom');
+        $table->string('nom'); // [cite: 17]
         $table->string('prenom');
-        $table->date('date_naissance');
+        $table->string('cin')->unique(); // Pour éviter les doublons
         $table->string('telephone');
+        $table->date('date_naissance');
         $table->text('adresse')->nullable();
         $table->timestamps(); // Crée created_at et updated_at automatiquement
     });
