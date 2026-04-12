@@ -12,9 +12,9 @@ class AppointmentController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        // Le middleware auth est déjà défini dans les routes
     }
-
+    
     // Vue pour le secrétaire
     public function secretaireIndex()
     {
