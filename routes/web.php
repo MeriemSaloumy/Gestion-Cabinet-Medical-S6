@@ -11,6 +11,11 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
+
+    if (auth()->user()->role === 'medecin') {
+        return redirect()->route('medecin.dashboard');
+    }
+    
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
