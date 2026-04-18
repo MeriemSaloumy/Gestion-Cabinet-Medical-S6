@@ -5,10 +5,10 @@
     <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between">
             <h4 class="mb-0">Ajouter un Nouveau Patient</h4>
-            <a href="{{ route('patients.index') }}" class="btn btn-light btn-sm">Retour</a>
+            <a href="{{ route('medecin.patients.index') }}" class="btn btn-light btn-sm">Retour</a>
         </div>
         <div class="card-body">
-            <form action="{{ route('patients.store') }}" method="POST">
+            <form action="{{ route('medecin.patients.store') }}" method="POST">
                 @csrf {{-- Protection obligatoire --}}
                 
                 <div class="row">

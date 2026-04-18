@@ -9,8 +9,16 @@ class Consultation extends Model
 {
     use HasFactory;
     
-    protected $fillable = ['patient_id', 'user_id', 'diagnostic', 'compte_rendu'];
-
+    
+    protected $fillable = [
+    'patient_id', 
+    'user_id', 
+    'diagnostic', 
+    'compte_rendu', 
+    'ordonnance', // <--- TRÈS IMPORTANT : AJOUTE ÇA
+    'tension',    // Ajoute aussi ça
+    'poids'       // Et ça
+];
     // Relation inverse : Une consultation appartient à un patient
     public function patient()
     {
