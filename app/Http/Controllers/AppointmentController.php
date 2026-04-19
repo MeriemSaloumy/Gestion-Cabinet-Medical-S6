@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\User;
+use App\Mail\AppointmentConfirmed;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 
 class AppointmentController extends Controller
@@ -85,5 +87,18 @@ class AppointmentController extends Controller
                                     ->paginate(10); // Aussi paginé pour le médecin
 
         return view('medecin.appointments', compact('appointments'));
+    }
+
+    public function confirm($id)
+    {
+        $appointment = Appointment::with('patient.user')->findOrFail($id);
+        $appointment->status = 'confirmé';
+        $appointment->save();
+
+        // ENVOI DU MAIL
+        // On suppose que le patient a un compte utilisateur avec un email
+        Mail::to($appointment->patient->email)->send(new AppointmentConfirmed($appointment));
+
+        return redirect()->back()->with('success', 'RDV confirmé et email envoyé !');
     }
 }

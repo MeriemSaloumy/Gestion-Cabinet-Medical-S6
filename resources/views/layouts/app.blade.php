@@ -6,9 +6,10 @@
     <title>Cabinet Médical</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
     <style>
         body { background-color: #f8f9fa; }
-        .navbar { shadow-sm; }
         .nav-link { font-weight: 500; transition: 0.3s; }
         .nav-link:hover { color: #fff !important; opacity: 0.8; }
         .active-link { border-bottom: 2px solid white; }
@@ -17,7 +18,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ Auth::user()->role == 'medecin' ? route('medecin.dashboard') : route('secretaire.dashboard') }}">
+            <a class="navbar-brand fw-bold" href="{{ url('/dashboard') }}">
                 <i class="fas fa-hospital-user me-2"></i>Cabinet Médical
             </a>
             
@@ -29,28 +30,42 @@
                 <ul class="navbar-nav ms-auto align-items-center">
                     @auth
                         <li class="nav-item px-2">
-                            {{-- SI C'EST UN MEDECIN --}}
                             @if(Auth::user()->role == 'medecin')
                                 <a class="nav-link {{ request()->routeIs('medecin.dashboard') ? 'active-link text-white' : '' }}" href="{{ route('medecin.dashboard') }}">
                                     <i class="fas fa-chart-line me-1"></i> Dashboard
                                 </a>
-                            {{-- SI C'EST UNE SECRETAIRE --}}
-                            @else
+                            @elseif(Auth::user()->role == 'secretaire')
                                 <a class="nav-link {{ request()->routeIs('secretaire.dashboard') ? 'active-link text-white' : '' }}" href="{{ route('secretaire.dashboard') }}">
+                                    <i class="fas fa-chart-line me-1"></i> Dashboard
+                                </a>
+                            @else
+                                <a class="nav-link" href="{{ route('patient.dashboard') }}">
                                     <i class="fas fa-chart-line me-1"></i> Dashboard
                                 </a>
                             @endif
                         </li>
 
-                        {{-- LIEN RENDEZ-VOUS (Affiché seulement pour la secrétaire) --}}
                         @if(Auth::user()->role == 'secretaire')
-                        <li class="nav-item px-2">
-                            <a class="nav-link {{ request()->routeIs('secretaire.appointments.*') ? 'active-link text-white' : '' }}" href="{{ route('secretaire.appointments.index') }}">
-                                <i class="fas fa-calendar-alt me-1"></i> Rendez-vous
-                            </a>
-                        </li>
+                            <li class="nav-item px-2">
+                                <a class="nav-link {{ request()->routeIs('secretaire.appointments.*') ? 'active-link text-white' : '' }}" href="{{ route('secretaire.appointments.index') }}">
+                                    <i class="bi bi-calendar-event me-1"></i> Gérer l'Agenda
+                                </a>
+                            </li>
+                            <li class="nav-item px-2">
+                                <a class="nav-link {{ request()->routeIs('secretaire.patients.*') ? 'active-link text-white' : '' }}" href="{{ route('secretaire.patients.index') }}">
+                                    <i class="bi bi-people me-1"></i> Liste Patients
+                                </a>
+                            </li>
                         @endif
-                        
+
+                        @if(Auth::user()->role == 'patient')
+                            <li class="nav-item px-2">
+                                <a class="nav-link" href="{{ route('patient.dashboard') }}">
+                                    <i class="bi bi-person-heart me-1"></i> Mes Rendez-vous
+                                </a>
+                            </li>
+                        @endif
+
                         <li class="nav-item ms-lg-3 py-2 py-lg-0">
                             <span class="badge bg-white text-primary px-3 py-2 rounded-pill shadow-sm">
                                 <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}

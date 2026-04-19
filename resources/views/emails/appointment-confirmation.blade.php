@@ -16,10 +16,10 @@
             <h2>Confirmation de rendez-vous</h2>
         </div>
         <div class="content">
-            <h3>Bonjour {{ $patient->name }},</h3>
+            <h3>Bonjour {{ $appointment->patient->nom }} {{ $appointment->patient->prenom }},</h3>
             <p>Votre rendez-vous a été confirmé :</p>
             <ul>
-                <li><strong>Médecin :</strong> Dr. {{ $medecin->name }}</li>
+                <li><strong>Médecin :</strong> Dr. {{ $appointment->medecin->name }}</li>
                 <li><strong>Date :</strong> {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('d/m/Y') }}</li>
                 <li><strong>Heure :</strong> {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('H:i') }}</li>
                 <li><strong>Motif :</strong> {{ $appointment->motif ?? 'Non spécifié' }}</li>
