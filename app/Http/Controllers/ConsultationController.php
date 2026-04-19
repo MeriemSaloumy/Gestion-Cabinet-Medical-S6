@@ -2,54 +2,63 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Models\Patient;
-use App\Models\Consultation;
 use Illuminate\Http\Request;
+use App\Models\Consultation;
+use App\Models\Appointment;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Barryvdh\DomPDF\Facade\Pdf; 
 
 class ConsultationController extends Controller
 {
-    // Affiche le formulaire pour une nouvelle consultation
-    public function create(Request $request)
+    /**
+     * Affiche le formulaire de création de consultation
+     */
+    public function create($patient_id)
     {
-        // On récupère l'ID du patient passé dans l'URL
-        $patient = Patient::findOrFail($request->patient_id);
+        // On récupère les infos du patient pour les afficher sur la page
+        $patient = User::findOrFail($patient_id);
         
         return view('medecin.consultations.create', compact('patient'));
     }
 
-    // Enregistre la consultation en base de données
+    /**
+     * Enregistre la consultation et met à jour le rendez-vous
+     */
     public function store(Request $request)
     {
+        // 1. VALIDATION DES DONNÉES
         $request->validate([
-            'patient_id' => 'required|exists:patients,id',
+            'patient_id' => 'required|exists:users,id',
             'diagnostic' => 'required|string',
-            'compte_rendu' => 'required|string',
+            'ordonnance' => 'required|string',
         ]);
 
-        Consultation::create([
-          'patient_id' => $request->patient_id,
-          'user_id' => auth()->id(), // On lie le médecin connecté
-          'diagnostic' => $request->diagnostic,
-          'compte_rendu' => $request->compte_rendu,
+        // 2. ENREGISTREMENT DE LA CONSULTATION
+        // On stocke le résultat dans la variable $consultation pour l'utiliser après
+        $consultation = Consultation::create([
+            'patient_id'   => $request->patient_id,
+            'user_id'      => Auth::id(), // Le médecin connecté
+            'diagnostic'   => $request->diagnostic,
+            'ordonnance'   => $request->ordonnance,
+            'compte_rendu' => $request->diagnostic, // On remplit par défaut avec le diagnostic
         ]);
 
-        return redirect()->route('patients.show', $request->patient_id)
-                         ->with('success', 'Consultation enregistrée !');
-    }
+        // 3. MISE À JOUR DU STATUT DU RENDEZ-VOUS
+        // On cherche le rendez-vous "en attente" le plus récent pour ce patient
+        $appointment = Appointment::where('patient_id', $request->patient_id)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
 
-    public function generatePDF($id)
-    {
-    // On récupère la consultation avec les infos du patient
-    $consultation = \App\Models\Consultation::with('patient')->findOrFail($id);
-    
-    // On prépare le PDF à partir d'une vue qu'on va créer
-    $pdf = Pdf::loadView('medecin.consultations.ordonnance_pdf', compact('consultation'));
-    
-    // On lance le téléchargement
-    return $pdf->download('ordonnance_' . $consultation->patient->nom . '.pdf');
+        if ($appointment) {
+            // On utilise 'completed' car c'est ce qui est défini dans ta migration
+            $appointment->update([
+                'status' => 'completed'
+            ]);
+        }
+
+        // 4. REDIRECTION VERS LA VUE DE L'ORDONNANCE
+        // Maintenant $consultation existe, donc compact('consultation') fonctionnera !
+        return view('medecin.consultations.show', compact('consultation'));
     }
 }
-

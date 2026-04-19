@@ -19,9 +19,6 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -31,7 +28,7 @@ class AuthenticatedSessionController extends Controller
         // 1. On récupère l'utilisateur qui vient de se connecter
         $user = Auth::user();
 
-        // 2. ON DÉCIDE DE LA DIRECTION (C'est l'aiguillage)
+        // 2. L'AIGUILLAGE PAR RÔLE
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         } 
@@ -40,10 +37,15 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('medecin.dashboard');
         }
 
-        // 3. Si ce n'est ni l'un ni l'autre, on va au dashboard par défaut
+        // AJOUT : Si c'est la secrétaire, on l'envoie vers son dashboard dédié
+        if ($user->role === 'secretaire') {
+            return redirect()->route('secretaire.dashboard');
+        }
+
+        // 3. Par défaut pour les patients ou autres
         return redirect()->intended(route('dashboard', absolute: false));
     }
-
+////////
     /**
      * Destroy an authenticated session.
      */

@@ -4,77 +4,82 @@ namespace App\Http\Controllers;
 
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use Carbon\Carbon; // Indispensable pour la gestion des dates
 
 class PatientController extends Controller
 {
+    /**
+     * Liste des patients avec filtres (Dashboard).
+     */
     public function index(Request $request)
     {
-        // 1. On récupère le mot-clé tapé dans la barre de recherche
-        $search = $request->input('query');
+        $filter = $request->query('filter');
+        $query = Patient::query();
+        $title = "Liste de tous les Patients";
 
-        // 2. On interroge la base de données avec Eloquent
-        $patients = Patient::when($search, function ($query, $search) {
-            return $query->where('nom', 'like', "%{$search}%")
-                         ->orWhere('cin', 'like', "%{$search}%");
-        })->get();
+        // Filtre pour les nouveaux patients du mois actuel
+        if ($filter == 'month') {
+            $query->whereMonth('created_at', Carbon::now()->month)
+                  ->whereYear('created_at', Carbon::now()->year);
+            $title = "Nouveaux Patients du Mois";
+        }
 
-        // 3. On envoie les résultats à la vue
-        return view('medecin.patients.index', compact('patients', 'search'));
+        $patients = $query->orderBy('nom', 'asc')->paginate(10);
+
+        return view('secretaire.patients.index', compact('patients', 'title'));
     }
 
-    // Afficher le formulaire de création
     public function create()
     {
-        return view('medecin.patients.create');
+        return view('secretaire.patients.create');
     }
 
-    // Enregistrer un nouveau patient
     public function store(Request $request)
     {
-        // Validation (Crucial pour la sécurité et les points du projet !)
         $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'cin' => 'required|string|unique:patients,cin',
-            'telephone' => 'required|string',
+            'nom'            => 'required|string|max:255',
+            'prenom'         => 'required|string|max:255',
+            'cin'            => 'required|string|unique:patients,cin',
+            'telephone'      => 'required|string',
             'date_naissance' => 'required|date',
-            'adresse' => 'nullable|string',
+            'sexe'           => 'required|in:M,F',
+            'email'          => 'nullable|email', // Ajouté car présent dans ton formulaire
+            'adresse'        => 'nullable|string',
         ]);
 
         Patient::create($validated);
 
-        return redirect()->route('patients.index')->with('success', 'Patient créé avec succès !');
+        return redirect()->route('secretaire.dashboard')
+                         ->with('success', 'Le patient ' . $request->nom . ' a été inscrit avec succès !');
     }
 
     public function show(Patient $patient)
     {
-        // On charge le patient avec toutes ses consultations, triées par date
-        $patient->load(['consultations' => function($query) {
-            $query->orderBy('created_at', 'desc');
-        }]);
-
-        return view('medecin.patients.show', compact('patient'));
+        $patient->load('appointments'); 
+        return view('secretaire.patients.show', compact('patient'));
     }
 
-    // Modifier un patient (Formulaire)
     public function edit(Patient $patient)
     {
-        return view('medecin.patients.edit', compact('patient'));
+        return view('secretaire.patients.edit', compact('patient'));
     }
 
-    // Mettre à jour les infos
     public function update(Request $request, Patient $patient)
     {
         $validated = $request->validate([
-            'nom' => 'required',
-            'prenom' => 'required',
-            'cin' => 'required|unique:patients,cin,' . $patient->id,
-            'telephone' => 'required',
+            'nom'            => 'required|string|max:255',
+            'prenom'         => 'required|string|max:255',
+            'cin'            => 'required|string|unique:patients,cin,' . $patient->id,
+            'telephone'      => 'required|string',
             'date_naissance' => 'required|date',
+            'sexe'           => 'required|in:M,F',
+            'email'          => 'nullable|email',
+            'adresse'        => 'nullable|string',
         ]);
 
         $patient->update($validated);
 
-        return redirect()->route('patients.index')->with('success', 'Fiche patient mise à jour !');
+        return redirect()->route('secretaire.patients.index')
+                         ->with('success', 'Fiche patient mise à jour avec succès.');
     }
 }

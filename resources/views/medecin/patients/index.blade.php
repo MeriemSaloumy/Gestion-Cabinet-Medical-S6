@@ -3,49 +3,45 @@
 @section('content')
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Gestion des Patients</h2>
-        <a href="{{ route('patients.create') }}" class="btn btn-primary">Ajouter un nouveau patient</a>
+        <h3 class="fw-bold">Répertoire des Patients</h3>
+        <form action="{{ route('medecin.patients.index') }}" method="GET" class="d-flex w-50">
+            <input type="text" name="search" class="form-control me-2 shadow-sm" placeholder="Rechercher par Nom ou CIN..." value="{{ request('search') }}">
+            <button type="submit" class="btn btn-primary shadow-sm">Chercher</button>
+        </form>
     </div>
 
-    <form action="{{ route('patients.index') }}" method="GET" class="mb-4">
-        <div class="input-group">
-            <input type="text" name="query" class="form-control" placeholder="Rechercher par nom ou CIN..." value="{{ request('query') }}">
-            <button class="btn btn-primary" type="submit">Rechercher</button>
-        </div>
-    </form>
-
-    <div class="card shadow">
+    <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
                     <tr>
-                        <th>Patient</th>
+                        <th class="px-4">Patient</th>
                         <th>CIN</th>
-                        <th>Actions</th>
+                        <th>Âge</th>
+                        <th class="text-end px-4">Historique</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($patients as $patient)
+                    @foreach($patients as $patient)
                     <tr>
-                        <td>{{ $patient->nom }} {{ $patient->prenom }}</td>
-                        <td>{{ $patient->cin }}</td>
-                        <td>
-                            <a href="{{ route('patients.show', $patient->id) }}" class="btn btn-sm btn-info text-white">
-                                Voir Historique
-                            </a>
-                            <a href="{{ route('consultations.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-success">
-                                Nouvelle Consultation
+                        <td class="px-4">
+                            <span class="fw-bold text-dark">{{ $patient->nom }} {{ $patient->prenom }}</span>
+                        </td>
+                        <td><span class="badge bg-light text-dark">{{ $patient->cin }}</span></td>
+                        <td>{{ \Carbon\Carbon::parse($patient->date_naissance)->age }} ans</td>
+                        <td class="text-end px-4">
+                            <a href="{{ route('medecin.patients.dossier', $patient->id) }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                <i class="fas fa-folder-open me-1"></i> Dossier Médical
                             </a>
                         </td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="3" class="text-center py-4">Aucun patient trouvé.</td>
-                    </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
+    </div>
+    <div class="mt-3">
+        {{ $patients->links() }}
     </div>
 </div>
 @endsection

@@ -2,149 +2,88 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Appointment;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\Appointment;
+use App\Models\Patient;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 
 class AppointmentController extends Controller
 {
-    public function __construct()
-    {
-        // Le middleware auth est déjà défini dans les routes
-    }
-    
-    // Vue pour le secrétaire
-    public function secretaireIndex()
-    {
-        $appointments = Appointment::with(['patient', 'medecin'])
-            ->orderBy('appointment_date', 'desc')
-            ->paginate(15);
-        
-        $medecins = User::where('role', 'medecin')->get();
-        $patients = User::where('role', 'patient')->get();
-        
-        return view('secretaire.appointments', compact('appointments', 'medecins', 'patients'));
+    /**
+     * Liste des rendez-vous pour la secrétaire (AVEC PAGINATION).
+     */
+   
+    public function secretaireIndex(Request $request)
+{
+    $filter = $request->query('filter');
+    $query = Appointment::with('patient', 'medecin'); // On charge les relations pour éviter les erreurs
+    $title = "Tous les Rendez-vous";
+
+    // Si on a cliqué sur "Rendez-vous du jour"
+    if ($filter == 'today') {
+        $query->whereDate('appointment_date', \Carbon\Carbon::today());
+        $title = "Rendez-vous d'aujourd'hui (" . now()->format('d/m/Y') . ")";
     }
 
-    // Formulaire de création
+    $appointments = $query->orderBy('appointment_date', 'asc')->paginate(10);
+
+    return view('secretaire.appointments.index', compact('appointments', 'title'));
+}
+
+    /**
+     * Affiche le formulaire de création.
+     */
     public function create()
     {
+        $patients = Patient::all();
         $medecins = User::where('role', 'medecin')->get();
-        $patients = User::where('role', 'patient')->get();
-        return view('secretaire.create-appointment', compact('medecins', 'patients'));
-    }
 
-    // Stocker un nouveau rendez-vous
+        return view('secretaire.appointments.create', compact('patients', 'medecins'));
+    }
+    public function destroy(Appointment $appointment)
+{
+    // Suppression du rendez-vous
+    $appointment->delete();
+
+    // Redirection avec un message de succès
+    return redirect()->route('secretaire.appointments.index')
+                     ->with('success', 'Le rendez-vous a été supprimé avec succès.');
+}
+    /**
+     * Enregistre le rendez-vous.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'patient_id' => 'required|exists:users,id',
+        $validated = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
             'medecin_id' => 'required|exists:users,id',
-            'appointment_date' => 'required|date|after:now',
+            'appointment_date' => 'required|date',
             'motif' => 'nullable|string|max:255',
         ]);
 
-        // Vérifier si le créneau est disponible
-        $existing = Appointment::where('medecin_id', $request->medecin_id)
-            ->where('appointment_date', $request->appointment_date)
-            ->whereNotIn('status', ['cancelled'])
-            ->exists();
-
-        if ($existing) {
-            return back()->withErrors(['appointment_date' => 'Ce créneau est déjà pris'])->withInput();
-        }
-
-        $appointment = Appointment::create([
-            'patient_id' => $request->patient_id,
-            'medecin_id' => $request->medecin_id,
-            'appointment_date' => $request->appointment_date,
-            'motif' => $request->motif,
-            'status' => 'confirmed',
-            'notes' => $request->notes,
+        Appointment::create([
+            'patient_id' => $validated['patient_id'],
+            'medecin_id' => $validated['medecin_id'],
+            'appointment_date' => $validated['appointment_date'],
+            'motif' => $validated['motif'],
+            'status' => 'pending',
         ]);
 
-        $this->sendConfirmationEmail($appointment);
-
-        return redirect()->route('secretaire.appointments')
-            ->with('success', 'Rendez-vous créé avec succès !');
+        return redirect()->route('secretaire.appointments.index')
+                         ->with('success', 'Rendez-vous enregistré avec succès !');
     }
 
-    // Annuler un rendez-vous
-    public function cancel(Appointment $appointment)
-    {
-        $appointment->update(['status' => 'cancelled']);
-        
-        $this->sendCancellationEmail($appointment);
-
-        return redirect()->route('secretaire.appointments')
-            ->with('success', 'Rendez-vous annulé avec succès !');
-    }
-
-    // Vue médecin pour ses rendez-vous
+    /**
+     * Liste pour le médecin connecté.
+     */
     public function medecinIndex()
     {
-        $appointments = Appointment::with('patient')
-            ->where('medecin_id', Auth::id())
-            ->whereDate('appointment_date', '>=', now())
-            ->orderBy('appointment_date', 'asc')
-            ->get();
+        $appointments = Appointment::where('medecin_id', Auth::id())
+                                    ->with('patient')
+                                    ->latest()
+                                    ->paginate(10); // Aussi paginé pour le médecin
 
-        $pastAppointments = Appointment::with('patient')
-            ->where('medecin_id', Auth::id())
-            ->whereDate('appointment_date', '<', now())
-            ->orderBy('appointment_date', 'desc')
-            ->limit(20)
-            ->get();
-
-        return view('medecin.appointments', compact('appointments', 'pastAppointments'));
-    }
-
-    // Vue patient pour ses rendez-vous
-    public function patientIndex()
-    {
-        $upcomingAppointments = Appointment::with('medecin')
-            ->where('patient_id', Auth::id())
-            ->whereDate('appointment_date', '>=', now())
-            ->where('status', '!=', 'cancelled')
-            ->orderBy('appointment_date', 'asc')
-            ->get();
-
-        $pastAppointments = Appointment::with('medecin')
-            ->where('patient_id', Auth::id())
-            ->where(function($q) {
-                $q->whereDate('appointment_date', '<', now())
-                  ->orWhere('status', 'cancelled');
-            })
-            ->orderBy('appointment_date', 'desc')
-            ->get();
-
-        return view('patient.appointments', compact('upcomingAppointments', 'pastAppointments'));
-    }
-
-    private function sendConfirmationEmail(Appointment $appointment)
-    {
-        $patient = $appointment->patient;
-        $medecin = $appointment->medecin;
-        
-        Mail::send('emails.appointment-confirmation', [
-            'patient' => $patient,
-            'medecin' => $medecin,
-            'appointment' => $appointment
-        ], function ($message) use ($patient) {
-            $message->to($patient->email)
-                    ->subject('Confirmation de votre rendez-vous');
-        });
-    }
-
-    private function sendCancellationEmail(Appointment $appointment)
-    {
-        Mail::send('emails.appointment-cancelled', [
-            'appointment' => $appointment
-        ], function ($message) use ($appointment) {
-            $message->to($appointment->patient->email)
-                    ->subject('Annulation de votre rendez-vous');
-        });
+        return view('medecin.appointments', compact('appointments'));
     }
 }
