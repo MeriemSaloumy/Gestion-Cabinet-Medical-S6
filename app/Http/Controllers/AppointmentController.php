@@ -15,6 +15,17 @@ class AppointmentController extends Controller
     /**
      * Liste des rendez-vous pour la secrétaire (AVEC PAGINATION).
      */
+    public function index()
+    {
+        // On récupère tous les rendez-vous, par exemple classés par date
+        $appointments = Appointment::with(['patient', 'medecin']) // Charge aussi les infos du patient
+                        ->select('appointments.*') 
+                        ->distinct()
+                        ->orderBy('appointment_date', 'asc')
+                        ->paginate(10);
+
+        return view('secretaire.appointments.index', compact('appointments'));
+    }
    
     public function secretaireIndex(Request $request)
 {

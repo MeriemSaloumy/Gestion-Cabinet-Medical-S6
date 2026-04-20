@@ -33,5 +33,19 @@ class UserSeeder extends Seeder
         'password' => bcrypt('password'),
         'role' => 'secretaire',
     ]);
+
+    \App\Models\User::create([
+        'name' => 'Secrétaire Cabinet',
+        'email' => 'secretaire@cabinet.com',
+        'password' => Hash::make('password123'), // Ton mot de passe
+        'role' => 'secretaire',
+    ]);
+
+    \App\Models\User::create([
+        'name' => 'Ahmed Alami',
+        'email' => 'ahmed@patient.com',
+        'password' => Hash::make('password123'), // Ton mot de passe
+        'role' => 'patient',
+    ]);
 }
 }

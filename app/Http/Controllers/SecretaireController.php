@@ -29,7 +29,9 @@ class SecretaireController extends Controller
     // Affiche la liste des patients
     public function patientsIndex()
     {
-        $patients = User::where('role', 'patient')->get(); 
+        $patients = User::where('role', 'patient')->paginate(10); 
+
+        $title = "Liste des Patients";
         
         return view('secretaire.patients.index', compact('patients'));
     }

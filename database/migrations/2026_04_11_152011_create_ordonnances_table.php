@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ordonnances', function (Blueprint $table) {
+        Schema::create('ordonnance', function (Blueprint $table) {
             $table->id();
             $table->foreignId('consultation_id')->constrained()->onDelete('cascade');
             $table->text('contenu'); // Liste des médicaments et posologie
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ordonnances');
+        Schema::dropIfExists('ordonnance');
     }
 };

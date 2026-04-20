@@ -13,38 +13,58 @@ use Illuminate\Support\Facades\Auth;
 class MedecinController extends Controller
 {
     /**
-     * Dashboard du médecin : Stats, Recherche CIN et Agenda
+     * Dashboard du médecin
      */
-
-
     public function index(Request $request)
-{
-    $today = \Carbon\Carbon::today();
-    $filter = $request->query('filter'); 
+    {
+        $today = Carbon::today();
+        $filter = $request->query('filter'); 
 
-    // Stats
-    $rdvAujourdhui = \App\Models\Appointment::whereDate('appointment_date', $today)->count();
-    $consultationsMois = \App\Models\Consultation::whereMonth('created_at', now()->month)->count();
-    $totalPatientsSuivis = \App\Models\Patient::count();
+        $rdvAujourdhui = Appointment::whereDate('appointment_date', $today)->count();
+        $consultationsMois = Consultation::whereMonth('created_at', now()->month)->count();
+        $totalPatientsSuivis = Patient::count();
 
-    // Requête de base
-    $query = \App\Models\Appointment::with('patient')->whereDate('appointment_date', $today);
+        $query = Appointment::with('patient')->whereDate('appointment_date', $today);
 
-    // FILTRE HARMONISÉ
-    // Si on clique sur la carte rouge, on affiche tout sauf ce qui est 'termine'
-    if ($filter == 'waiting') {
-        $query->where('status', '!=', 'termine'); 
+        if ($filter == 'waiting') {
+            $query->where('status', '!=', 'termine'); 
+        }
+
+        $fileAttente = $query->orderBy('appointment_date', 'asc')->get();
+
+        return view('medecin.dashboard', compact(
+            'rdvAujourdhui', 
+            'consultationsMois', 
+            'totalPatientsSuivis', 
+            'fileAttente'
+        ));
     }
 
-    $fileAttente = $query->orderBy('appointment_date', 'asc')->get();
+    /**
+     * MÉTHODE MANQUANTE : Liste tous les patients (Dossiers)
+     */
+    public function patientsIndex(Request $request)
+    {
+        $search = $request->query('search');
 
-    return view('medecin.dashboard', compact(
-        'rdvAujourdhui', 
-        'consultationsMois', 
-        'totalPatientsSuivis', 
-        'fileAttente'
-    ));
-}
+    $query = Patient::query();
+
+    // Si une recherche est effectuée, on filtre par nom, prenom ou cin
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('nom', 'LIKE', "%{$search}%")
+              ->orWhere('prenom', 'LIKE', "%{$search}%")
+              ->orWhere('cin', 'LIKE', "%{$search}%");
+        });
+    }
+
+    // On récupère les patients avec pagination (10 par page)
+    // appends(request()->query()) permet de garder le mot-clé de recherche dans les liens de pagination
+    $patients = $query->orderBy('nom', 'asc')->paginate(10)->appends(request()->query());
+
+    return view('medecin.patients.index', compact('patients'));
+    }
+
     /**
      * Formulaire pour créer une nouvelle consultation
      */
@@ -54,39 +74,36 @@ class MedecinController extends Controller
     }
 
     /**
-     * Enregistrement de la consultation et de l'ordonnance
+     * Enregistrement de la consultation
      */
+    public function storeConsultation(Request $request)
+    {
+        $validated = $request->validate([
+            'patient_id'   => 'required|exists:patients,id', // Correction : table 'patients'
+            'diagnostic'   => 'required|string',
+            'compte_rendu' => 'required|string', 
+            'ordonnance'   => 'required|string',
+            'tension'      => 'nullable|string',
+            'poids'        => 'nullable|numeric',
+        ]);
 
-   public function storeConsultation(Request $request)
-{
-    $validated = $request->validate([
-        'patient_id'   => 'required|exists:users,id', // Assure-toi que c'est 'users' ou 'patients' selon ta table
-        'diagnostic'   => 'required|string',
-        'compte_rendu' => 'required|string', 
-        'ordonnance'   => 'required|string',
-        'tension'      => 'nullable|string',
-        'poids'        => 'nullable|numeric',
-    ]);
+        $validated['user_id'] = Auth::id();
 
-    $validated['user_id'] = Auth::id();
+        $consultation = Consultation::create($validated);
 
-    // IMPORTANT : On stocke la consultation créée dans une variable
-    $consultation = Consultation::create($validated);
+        // Update du rendez-vous en 'completed'
+        Appointment::where('patient_id', $request->patient_id)
+                   ->whereDate('appointment_date', Carbon::today())
+                   ->update(['status' => 'completed']);
 
-    // Update du rendez-vous
-    Appointment::where('patient_id', $request->patient_id)
-               ->whereDate('appointment_date', \Carbon\Carbon::today())
-               ->update(['status' => 'completed']); // Utilise le mot exact de ta migration
+        return view('medecin.consultations.show', compact('consultation'));
+    }
 
-    // AU LIEU DE REDIRECT, ON AFFICHE LA VUE SHOW AVEC LES DONNÉES
-    return view('medecin.consultations.show', compact('consultation'));
-}
     /**
-     * Affichage du dossier patient complet (Historique)
+     * Affichage du dossier patient complet
      */
     public function showPatientDossier(Patient $patient)
     {
-        // On récupère toutes les consultations passées de ce patient
         $historique = Consultation::where('patient_id', $patient->id)
                                   ->orderBy('created_at', 'desc')
                                   ->get();
@@ -97,13 +114,10 @@ class MedecinController extends Controller
     /**
      * Génération de l'ordonnance en PDF
      */
-    public function generatePDF($id)
-    {
-        $consultation = Consultation::with('patient')->findOrFail($id);
-        
-        // On charge une vue spécifique pour le design du PDF
-        $pdf = Pdf::loadView('medecin.consultations.pdf', compact('consultation'));
-        
-        return $pdf->download('Ordonnance_' . $consultation->patient->nom . '.pdf');
-    }
+public function generatePDF($id)
+{
+    $consultation = Consultation::with('patient')->findOrFail($id);
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('medecin.consultations.ordonnance_pdf', compact('consultation'));
+    return $pdf->download('Ordonnance_' . $consultation->patient->nom . '.pdf');
+}
 }

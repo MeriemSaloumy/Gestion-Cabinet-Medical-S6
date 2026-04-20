@@ -5,7 +5,7 @@
 <div class="container mt-4">
     <div class="card shadow-sm border-0" style="border-radius: 15px;">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h4 class="fw-bold mb-0 text-primary"><i class="fas fa-users me-2"></i> {{ $title }}</h4>
+            <h4 class="fw-bold mb-0 text-primary"><i class="fas fa-users me-2"></i> "Liste des Patients";</h4>
             <a href="{{ route('secretaire.patients.create') }}" class="btn btn-success rounded-pill px-4 shadow-sm">
                 <i class="fas fa-plus me-1"></i> Nouveau Patient
             </a>

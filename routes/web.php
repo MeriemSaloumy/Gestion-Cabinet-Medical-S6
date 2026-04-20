@@ -5,7 +5,7 @@ use App\Http\Controllers\MedecinController;
 use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\SecretaireController;
 use App\Http\Controllers\AppointmentController;
-use App\Http\Controllers\PatientDashboardController;
+use App\Http\Controllers\PatientController;
 
 // Accueil
 Route::get('/', function () {
@@ -29,16 +29,24 @@ Route::get('/dashboard', function () {
 
 
 // ROUTES MÉDECIN
-Route::middleware(['auth'])->prefix('medecin')->group(function () {
+Route::middleware(['auth'])->prefix('medecin')->name('medecin.')->group(function () {
     
-    Route::get('/home', [MedecinController::class, 'index'])->name('medecin.dashboard');
+    // Dashboard : accessible via /medecin/home
+    Route::get('/home', [MedecinController::class, 'index'])->name('dashboard');
+
+    // Liste des patients : accessible via /medecin/patients
+    Route::get('/patients', [MedecinController::class, 'patientsIndex'])->name('patients.index');
+
+    // Dossier d'un patient : accessible via /medecin/patients/{patient}/dossier
+    // On enlève le "/medecin" en trop car le prefix s'en occupe
+    Route::get('/patients/{patient}/dossier', [MedecinController::class, 'showPatientDossier'])->name('patients.dossier'); 
+
+    Route::get('/consultation/{id}/pdf', [MedecinController::class, 'generatePDF'])->name('ordonnance.pdf');
 
     // Consultations
-    Route::get('/consultation/create/{patient_id}', [ConsultationController::class, 'create'])->name('medecin.consultations.create');
-    Route::post('/consultation/store', [ConsultationController::class, 'store'])->name('medecin.consultations.store');
+    Route::get('/consultation/create/{patient_id}', [ConsultationController::class, 'create'])->name('consultations.create');
+    Route::post('/consultation/store', [ConsultationController::class, 'store'])->name('consultations.store');
     
-    // Liste des patients (Dossiers)
-    Route::get('/patients', [MedecinController::class, 'patientsIndex'])->name('medecin.patients.index');
 });
 
 
@@ -62,7 +70,8 @@ Route::middleware(['auth'])->prefix('secretaire')->group(function () {
 // ROUTES PATIENT 
 // Vérifie que ton middleware s'appelle bien 'role:patient' ou utilise juste 'auth'
 Route::middleware(['auth'])->group(function () {
-    Route::get('/patient/dashboard', [PatientDashboardController::class, 'index'])->name('patient.dashboard');
-});
+    Route::get('/patient/dashboard', [App\Http\Controllers\PatientController::class, 'index'])->name('patient.dashboard');
+    }
+);
 
 require __DIR__.'/auth.php';
