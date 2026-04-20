@@ -23,7 +23,7 @@
                             @forelse($rendezVous as $rdv)
                             <tr>
                                 <td>{{ \Carbon\Carbon::parse($rdv->date_heure)->format('d/m/Y H:i') }}</td>
-                                <td>Dr. {{ $rdv->doctor->name }}</td>
+                                <td>Dr. {{ $appointment->medecin->name ?? 'Médecin non assigné' }}</td>
                                 <td>
                                     <span class="badge bg-{{ $rdv->status == 'confirmé' ? 'success' : 'warning' }}">
                                         {{ ucfirst($rdv->status) }}

@@ -17,6 +17,10 @@ class Appointment extends Model
     protected $casts = [
         'appointment_date' => 'datetime',
     ];
+    // Dans Appointment.php
+    public function prescription() {
+        return $this->hasOne(Prescription::class);
+    }
 
     // CORRECTION ICI : Utilise le modèle Patient, pas User
     public function patient(): BelongsTo

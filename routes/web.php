@@ -65,6 +65,9 @@ Route::middleware(['auth'])->prefix('secretaire')->group(function () {
     Route::get('/patients', [SecretaireController::class, 'patientsIndex'])->name('secretaire.patients.index');
     Route::get('/patients/create', [SecretaireController::class, 'patientsCreate'])->name('secretaire.patients.create');
     Route::post('/patients/store', [SecretaireController::class, 'patientsStore'])->name('secretaire.patients.store');
+
+    Route::get('/patients/{id}/edit', [SecretaireController::class, 'patientsEdit'])->name('secretaire.patients.edit');
+    Route::put('/patients/{id}', [SecretaireController::class, 'patientsUpdate'])->name('secretaire.patients.update');
 });
 
 // ROUTES PATIENT 

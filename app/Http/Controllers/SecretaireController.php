@@ -42,7 +42,7 @@ class SecretaireController extends Controller
         return view('secretaire.patients.create');
     }
     public function patientsStore(Request $request)
-{
+    {
     // 1. Validation dial l-m3loumat li jaw mn l-formulaire
     $validated = $request->validate([
         'nom'    => 'required|string|max:255',
@@ -63,5 +63,11 @@ class SecretaireController extends Controller
 
     // 3. Redirection l la liste dial les patients m3a message de succès
     return redirect()->route('secretaire.patients.index')->with('success', 'Le patient a été inscrit avec succès !');
-}
+    }
+
+    public function patientsEdit($id)
+    {
+    $patient = User::findOrFail($id); // Cherche le patient
+    return view('secretaire.patients.edit', compact('patient')); // Renvoie vers la vue que tu vas créer
+    }
 }

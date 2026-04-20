@@ -16,5 +16,11 @@ class Patient extends Model
     {
         return $this->hasMany(Consultation::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id'); 
+        // Vérifie bien que la colonne dans ta table 'patients' s'appelle 'user_id'
+    }
     
 }

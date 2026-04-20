@@ -102,14 +102,42 @@ class AppointmentController extends Controller
 
     public function confirm($id)
     {
-        $appointment = Appointment::with('patient.user')->findOrFail($id);
-        $appointment->status = 'confirmé';
-        $appointment->save();
+    // On charge le RDV avec le patient ET son compte utilisateur (User)
+    $appointment = Appointment::with('patient.user')->findOrFail($id);
+    
+    $appointment->status = 'confirmed';
+    $appointment->save();
 
-        // ENVOI DU MAIL
-        // On suppose que le patient a un compte utilisateur avec un email
-        Mail::to($appointment->patient->email)->send(new AppointmentConfirmed($appointment));
+    // On cherche l'email : d'abord chez le patient, sinon chez l'utilisateur lié
+    $destinataire = $appointment->patient->email ?? ($appointment->patient->user->email ?? null);
 
-        return redirect()->back()->with('success', 'RDV confirmé et email envoyé !');
+    if ($destinataire) {
+        \Log::info('Envoi en cours vers : ' . $destinataire);
+        
+        Mail::to($destinataire)->send(new AppointmentConfirmed($appointment));
+        
+        \Log::info('Email enregistré dans le log !');
+    } else {
+        \Log::error('Email non envoyé : Pas d\'adresse trouvée pour le Patient ID ' . $appointment->patient_id);
+    }
+
+    return redirect()->back()->with('success', 'RDV confirmé et email envoyé !');
+    }
+
+    public function showPrescription($id)
+    {
+    // On récupère le rendez-vous AVEC sa prescription (Eager Loading)
+    $appointment = Appointment::with('prescription', 'user', 'doctor')->findOrFail($id);
+
+    // Vérification de sécurité pour toi (à supprimer après test)
+    if (!$appointment->prescription) {
+        return "Erreur : Aucune ordonnance n'est enregistrée pour ce rendez-vous en base de données.";
+    }
+
+    // On passe les données à la vue
+    return view('patient.ordonnance_detail', [
+        'appointment' => $appointment,
+        'prescription' => $appointment->prescription // C'est cette variable qui contient les médicaments
+    ]);
     }
 }

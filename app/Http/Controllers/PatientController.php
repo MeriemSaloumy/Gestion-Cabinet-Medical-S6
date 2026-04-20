@@ -14,29 +14,21 @@ class PatientController extends Controller
      * Liste des patients avec filtres (Dashboard).
      */
     public function index(Request $request)
-    {
-        $user = auth()->user(); 
-    
-    // 1. Récupérer les rendez-vous
-    $rendezVous = \App\Models\Appointment::where('patient_id', $user->id)
+{
+    $user = auth()->user(); 
+
+    // On ajoute with('medecin') pour charger les infos du docteur en même temps
+    $rendezVous = \App\Models\Appointment::with('medecin') 
+                    ->where('patient_id', $user->id)
                     ->orderBy('appointment_date', 'asc')
                     ->get();
 
-    // 2. Récupérer les consultations (Dossiers médicaux)
-    // Si tu n'as pas encore de table consultations, on envoie un tableau vide pour éviter l'erreur
-    $consultations = []; 
-    
-    /* Dès que tu auras une table Consultation, tu pourras utiliser :
-       $consultations = \App\Models\Consultation::where('patient_id', $user->id)->get();
-    */
-
-    // On envoie TOUTES les variables nécessaires à la vue
     return view('patient.dashboard', [
         'patient' => $user,
         'rendezVous' => $rendezVous,
-        'consultations' => $consultations
+        'consultations' => []
     ]);
-    }
+}
 
     // Tu peux supprimer la fonction dashboard() si elle fait doublon avec index()
     // ou la mettre à jour avec le même nom de variable :
@@ -101,5 +93,23 @@ class PatientController extends Controller
 
         return redirect()->route('secretaire.patients.index')
                          ->with('success', 'Fiche patient mise à jour avec succès.');
+    }
+
+    public function downloadPDF($id) {
+    // Utilise "with" pour charger les détails de l'ordonnance
+    $appointment = Appointment::with('prescription', 'doctor')->findOrFail($id);
+    
+    // Si tu utilises une table 'prescription_items' pour les médicaments :
+    // $appointment = Appointment::with('prescription.items')->findOrFail($id);
+
+    $data = [
+        'patient' => $appointment->patient->name,
+        'doctor' => $appointment->doctor->name,
+        'content' => $appointment->prescription->content, // Vérifie que ce champ n'est pas null en BDD
+        'date' => $appointment->date,
+    ];
+
+    $pdf = Pdf::loadView('pdf.ordonnance', $data);
+    return $pdf->download('ordonnance.pdf');
     }
 }

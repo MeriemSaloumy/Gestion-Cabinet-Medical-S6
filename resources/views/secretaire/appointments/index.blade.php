@@ -42,7 +42,7 @@
                                 <small class="text-muted">{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('H:i') }}</small>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark">{{ $appointment->patient->nom }} {{ $appointment->patient->prenom }}</div>
+                                <div class="fw-bold text-dark">{{ $appointment->patient->nom ?? 'Patient inconnu' }} {{ $appointment->patient->prenom ?? '' }}</div>
                             </td>
                             <td>
                                 <span class="text-secondary"><i class="bi bi-person-badge me-1"></i> Dr. {{ $appointment->medecin->name }}</span>
@@ -51,7 +51,7 @@
                                 <span class="text-muted small">{{ Str::limit($appointment->motif ?? 'Non précisé', 20) }}</span>
                             </td>
                             <td class="text-center">
-                                @if($appointment->status == 'confirmé')
+                                @if($appointment->status == 'confirmed' || $appointment->status == 'confirmé')
                                     <span class="badge rounded-pill bg-success px-3">
                                         <i class="bi bi-check-all"></i> Confirmé
                                     </span>
