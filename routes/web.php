@@ -64,4 +64,30 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('users', AdminController::class);
 });
 
+// ROUTE TEMPORAIRE POUR CRÉER L'ADMIN (À SUPPRIMER APRÈS)
+use App\Models\User;
+
+Route::get('/create-admin', function () {
+    // Vérifier si l'admin existe déjà
+    $admin = User::where('email', 'admin@cabinet.com')->first();
+    
+    if ($admin) {
+        return "L'admin existe déjà ! Email: admin@cabinet.com, Mot de passe: password123";
+    }
+    
+    User::create([
+        'name' => 'Administrateur',
+        'email' => 'admin@cabinet.com',
+        'password' => bcrypt('password123'),
+        'role' => 'admin'
+    ]);
+    
+    return "✅ Admin créé avec succès !<br>
+            📧 Email: admin@cabinet.com<br>
+            🔑 Mot de passe: password123<br><br>
+            🔄 <a href='/login'>Aller à la page de connexion</a>";
+});
+// Pour les consultations admin
+Route::get('/admin/consultations', [AdminDashboardController::class, 'consultations'])->name('admin.consultations.index');
+
 require __DIR__.'/auth.php';

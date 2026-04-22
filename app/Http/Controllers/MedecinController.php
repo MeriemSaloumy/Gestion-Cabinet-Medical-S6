@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Patient;
 use App\Models\Appointment;
 use App\Models\Consultation;
-use Barryvdh\DomPDF\Facade\Pdf;
+// use Barryvdh\DomPDF\Facade\Pdf;  // TEMPORAIREMENT DÉSACTIVÉ
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -47,22 +47,21 @@ class MedecinController extends Controller
     {
         $search = $request->query('search');
 
-    $query = Patient::query();
+        $query = Patient::query();
 
-    // Si une recherche est effectuée, on filtre par nom, prenom ou cin
-    if ($search) {
-        $query->where(function($q) use ($search) {
-            $q->where('nom', 'LIKE', "%{$search}%")
-              ->orWhere('prenom', 'LIKE', "%{$search}%")
-              ->orWhere('cin', 'LIKE', "%{$search}%");
-        });
-    }
+        // Si une recherche est effectuée, on filtre par nom, prenom ou cin
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nom', 'LIKE', "%{$search}%")
+                  ->orWhere('prenom', 'LIKE', "%{$search}%")
+                  ->orWhere('cin', 'LIKE', "%{$search}%");
+            });
+        }
 
-    // On récupère les patients avec pagination (10 par page)
-    // appends(request()->query()) permet de garder le mot-clé de recherche dans les liens de pagination
-    $patients = $query->orderBy('nom', 'asc')->paginate(10)->appends(request()->query());
+        // On récupère les patients avec pagination (10 par page)
+        $patients = $query->orderBy('nom', 'asc')->paginate(10)->appends(request()->query());
 
-    return view('medecin.patients.index', compact('patients'));
+        return view('medecin.patients.index', compact('patients'));
     }
 
     /**
@@ -79,7 +78,7 @@ class MedecinController extends Controller
     public function storeConsultation(Request $request)
     {
         $validated = $request->validate([
-            'patient_id'   => 'required|exists:patients,id', // Correction : table 'patients'
+            'patient_id'   => 'required|exists:patients,id',
             'diagnostic'   => 'required|string',
             'compte_rendu' => 'required|string', 
             'ordonnance'   => 'required|string',
@@ -113,11 +112,18 @@ class MedecinController extends Controller
 
     /**
      * Génération de l'ordonnance en PDF
+     * TEMPORAIREMENT DÉSACTIVÉ À CAUSE DE L'ERREUR DOMPDF
      */
-public function generatePDF($id)
-{
-    $consultation = Consultation::with('patient')->findOrFail($id);
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('medecin.consultations.ordonnance_pdf', compact('consultation'));
-    return $pdf->download('Ordonnance_' . $consultation->patient->nom . '.pdf');
-}
+    // public function generatePDF($id)
+    // {
+    //     $consultation = Consultation::with('patient')->findOrFail($id);
+    //     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('medecin.consultations.ordonnance_pdf', compact('consultation'));
+    //     return $pdf->download('Ordonnance_' . $consultation->patient->nom . '.pdf');
+    // }
+
+    // Version temporaire sans PDF
+    public function generatePDF($id)
+    {
+        return "Fonction PDF temporairement désactivée. Veuillez réinstaller DomPDF.";
+    }
 }

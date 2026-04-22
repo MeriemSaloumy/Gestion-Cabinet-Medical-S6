@@ -26,7 +26,19 @@
                 <td>{{ $user->id }}</td>
                 <td>{{ $user->name }}</td>
                 <td>{{ $user->email }}</td>
-                <td>{{ $user->role->name ?? 'Non défini' }}</td>
+                <td>
+                    @if($user->role == 'admin')
+                    <span class="badge bg-danger">Administrateur</span>
+                        @elseif($user->role == 'medecin')
+                    <span class="badge bg-primary">Médecin</span>
+                        @elseif($user->role == 'secretaire')
+                    <span class="badge bg-info">Secrétaire</span>
+                        @elseif($user->role == 'patient')
+                    <span class="badge bg-success">Patient</span>
+                        @else
+                    <span class="badge bg-secondary">Non défini</span>
+                        @endif
+                </td>
                 <td>
                     <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-warning">Modifier</a>
                     <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" style="display:inline-block;">

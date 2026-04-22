@@ -4,37 +4,47 @@
 <div class="container">
     <h1>Modifier l'utilisateur : {{ $user->name }}</h1>
     
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    
     <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
         @csrf
         @method('PUT')
         
         <div class="mb-3">
-            <label>Nom</label>
-            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $user->name) }}" required>
-            @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            <label for="name" class="form-label">Nom complet</label>
+            <input type="text" name="name" id="name" class="form-control" value="{{ old('name', $user->name) }}" required>
         </div>
         
         <div class="mb-3">
-            <label>Email</label>
-            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $user->email) }}" required>
-            @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            <label for="email" class="form-label">Email</label>
+            <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $user->email) }}" required>
         </div>
         
         <div class="mb-3">
-            <label>Nouveau mot de passe (laisser vide pour ne pas changer)</label>
-            <input type="password" name="password" class="form-control @error('password') is-invalid @enderror">
-            @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            <label for="password" class="form-label">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+            <input type="password" name="password" id="password" class="form-control">
         </div>
         
         <div class="mb-3">
-            <label>Rôle</label>
-            <select name="role_id" class="form-control @error('role_id') is-invalid @enderror" required>
-                <option value="">-- Sélectionner un rôle --</option>
-                @foreach($roles ?? [] as $role)
-                    <option value="{{ $role->id }}" {{ $user->role_id == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
-                @endforeach
+            <label for="role" class="form-label">Rôle</label>
+            <select name="role" id="role" class="form-control" required>
+                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Administrateur</option>
+                <option value="medecin" {{ old('role', $user->role) == 'medecin' ? 'selected' : '' }}>Médecin</option>
+                <option value="secretaire" {{ old('role', $user->role) == 'secretaire' ? 'selected' : '' }}>Secrétaire</option>
+                <option value="patient" {{ old('role', $user->role) == 'patient' ? 'selected' : '' }}>Patient</option>
             </select>
-            @error('role_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
         </div>
         
         <button type="submit" class="btn btn-primary">Mettre à jour</button>

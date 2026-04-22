@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -11,14 +10,13 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $users = User::with('role')->get();
+        $users = User::all();
         return view('admin.users.index', compact('users'));
     }
 
     public function create()
     {
-        $roles = Role::all();
-        return view('admin.users.create', compact('roles'));
+        return view('admin.users.create');
     }
 
     public function store(Request $request)
@@ -27,14 +25,14 @@ class AdminController extends Controller
             'name' => 'required',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'role_id' => 'required|exists:roles,id'
+            'role' => 'required|in:admin,medecin,secretaire,patient'
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id' => $request->role_id
+            'role' => $request->role
         ]);
 
         return redirect()->route('admin.users.index')->with('success', 'Utilisateur créé avec succès.');
@@ -43,20 +41,24 @@ class AdminController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $roles = Role::all();
-        return view('admin.users.edit', compact('user', 'roles'));
+        return view('admin.users.edit', compact('user'));
     }
 
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $id,
-            'role_id' => 'required|exists:roles,id'
+            'role' => 'required|in:admin,medecin,secretaire,patient'
         ]);
 
-        $user->update($request->only('name', 'email', 'role_id'));
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role
+        ]);
 
         if ($request->filled('password')) {
             $user->update(['password' => Hash::make($request->password)]);

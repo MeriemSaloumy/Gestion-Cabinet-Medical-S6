@@ -16,12 +16,8 @@ class AdminDashboardController extends Controller
         // Statistiques globales
         $totalPatients = Patient::count();
         $totalConsultations = Consultation::count();
-        $totalMedecins = User::whereHas('role', function($query) {
-            $query->where('name', 'medecin');
-        })->count();
-        $totalSecretaires = User::whereHas('role', function($query) {
-            $query->where('name', 'secretaire');
-        })->count();
+        $totalMedecins = User::where('role', 'medecin')->count();
+        $totalSecretaires = User::where('role', 'secretaire')->count();
         $totalRendezVous = Appointment::count();
         
         // Rendez-vous par mois pour le graphique (12 derniers mois)
@@ -66,5 +62,10 @@ class AdminDashboardController extends Controller
             'consultationsParMois',
             'derniersRendezVous'
         ));
+    }
+    public function consultations()
+    {
+        $consultations = Consultation::with('patient')->orderBy('created_at', 'desc')->paginate(20);
+        return view('admin.consultations.index', compact('consultations'));
     }
 }
