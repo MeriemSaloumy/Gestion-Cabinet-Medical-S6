@@ -20,8 +20,10 @@ return new class extends Migration
                 $table->decimal('poids', 5, 2)->nullable();
                 $table->timestamps();
                 
-                $table->foreign('patient_id')->references('id')->on('patients')->onDelete('cascade');
+               
                 $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+                // Remplace la ligne actuelle par celle-ci :
+                $table->foreignId('patient_id')->constrained('users')->onDelete('cascade');
             });
         }
     }

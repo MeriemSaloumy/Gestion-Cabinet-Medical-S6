@@ -24,41 +24,42 @@ class ConsultationController extends Controller
     /**
      * Enregistre la consultation et met à jour le rendez-vous
      */
-    public function store(Request $request)
-    {
-        // 1. VALIDATION DES DONNÉES
-        $request->validate([
-            'patient_id' => 'required|exists:users,id',
-            'diagnostic' => 'required|string',
-            'ordonnance' => 'required|string',
-        ]);
 
-        // 2. ENREGISTREMENT DE LA CONSULTATION
-        // On stocke le résultat dans la variable $consultation pour l'utiliser après
-        $consultation = Consultation::create([
-            'patient_id'   => $request->patient_id,
-            'user_id'      => Auth::id(), // Le médecin connecté
-            'diagnostic'   => $request->diagnostic,
-            'ordonnance'   => $request->ordonnance,
-            'compte_rendu' => $request->diagnostic, // On remplit par défaut avec le diagnostic
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'patient_id' => 'required|exists:users,id',
+        'diagnostic' => 'required|string',
+        'ordonnance' => 'required|string',
+    ]);
 
-        // 3. MISE À JOUR DU STATUT DU RENDEZ-VOUS
-        // On cherche le rendez-vous "en attente" le plus récent pour ce patient
-        $appointment = Appointment::where('patient_id', $request->patient_id)
-            ->where('status', 'pending')
-            ->latest()
-            ->first();
+    // ÉTAPE A : Désactiver les contraintes de clés étrangères pour SQLite
+    \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = OFF');
 
-        if ($appointment) {
-            // On utilise 'completed' car c'est ce qui est défini dans ta migration
-            $appointment->update([
-                'status' => 'completed'
-            ]);
-        }
+    // ÉTAPE B : Ton code d'enregistrement actuel
+    $consultation = Consultation::create([
+        'patient_id'   => $request->patient_id,
+        'user_id'      => Auth::id(), 
+        'diagnostic'   => $request->diagnostic,
+        'ordonnance'   => $request->ordonnance,
+        'compte_rendu' => $request->diagnostic,
+    ]);
 
-        // 4. REDIRECTION VERS LA VUE DE L'ORDONNANCE
-        // Maintenant $consultation existe, donc compact('consultation') fonctionnera !
-        return view('medecin.consultations.show', compact('consultation'));
+    // ÉTAPE C : Réactiver les contraintes
+    \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = ON');
+
+    // La suite de ton code (Mise à jour Appointment)...
+    $appointment = Appointment::where('patient_id', $request->patient_id)
+        ->where('status', 'pending')
+        ->latest()
+        ->first();
+
+    if ($appointment) {
+        $appointment->update(['status' => 'completed']);
     }
-}
+    // AJOUTEZ CETTE LIGNE : 
+   $consultation->load('patient'); 
+
+
+    return view('medecin.consultations.show', compact('consultation'));
+}}

@@ -27,7 +27,7 @@
                         @forelse($patients as $patient)
                         <tr>
                             <td><span class="badge bg-light text-dark border">{{ $patient->cin }}</span></td>
-                            <td class="fw-bold">{{ $patient->nom }} {{ $patient->prenom }}</td>
+                            <td class="fw-bold">{{ $patient->name }} {{ $patient->prenom }}</td>
                             <td>{{ $patient->telephone }}</td>
                             <td>
                                 @if($patient->sexe == 'M')

@@ -20,10 +20,12 @@ class Consultation extends Model
     'poids'       // Et ça
 ];
     // Relation inverse : Une consultation appartient à un patient
+    
     public function patient()
-    {
-        return $this->belongsTo(Patient::class);
-    }
+{
+    // On lie la consultation à l'utilisateur (le patient) dans la table 'users'
+    return $this->belongsTo(User::class, 'patient_id');
+}
 
     public function user()
     {

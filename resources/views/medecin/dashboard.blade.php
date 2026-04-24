@@ -120,8 +120,8 @@
                         <tr>
                             <td class="px-4 fw-bold text-primary">{{ \Carbon\Carbon::parse($rdv->appointment_date)->format('H:i') }}</td>
                             <td>
-                                <div class="fw-bold text-dark">{{ $rdv->patient->nom }} {{ $rdv->patient->prenom }}</div>
-                                <small class="text-muted">{{ $rdv->patient->cin }}</small>
+                                <div class="fw-bold text-dark">{{ $rdv->patient->name ?? 'Patient inconnu'}} </div>
+                                <small class="text-muted">{{ $rdv->patient->cin ?? 'inconu'}}</small>
                             </td>
                             <td>
                                 @if($rdv->status == 'termine')

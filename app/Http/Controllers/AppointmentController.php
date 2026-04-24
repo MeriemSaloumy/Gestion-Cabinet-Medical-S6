@@ -66,26 +66,30 @@ class AppointmentController extends Controller
     /**
      * Enregistre le rendez-vous.
      */
+
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'medecin_id' => 'required|exists:users,id',
-            'appointment_date' => 'required|date',
-            'motif' => 'nullable|string|max:255',
-        ]);
+{
+    // 1. On corrige 'exists:patients,id' par 'exists:users,id'
+    $validated = $request->validate([
+        'patient_id' => 'required|exists:users,id', // Correction ici
+        'medecin_id' => 'required|exists:users,id',
+        'appointment_date' => 'required|date',
+        'motif' => 'nullable|string|max:255',
+    ]);
 
-        Appointment::create([
-            'patient_id' => $validated['patient_id'],
-            'medecin_id' => $validated['medecin_id'],
-            'appointment_date' => $validated['appointment_date'],
-            'motif' => $validated['motif'],
-            'status' => 'pending',
-        ]);
+    // 2. L'enregistrement
+    Appointment::create([
+        'patient_id' => $request->patient_id, // Utilise bien l'ID envoyé
+        'medecin_id' => $validated['medecin_id'],
+        'appointment_date' => $validated['appointment_date'],
+        'motif' => $validated['motif'],
+        'status' => 'pending',
+        
+    ]);
 
-        return redirect()->route('secretaire.appointments.index')
-                         ->with('success', 'Rendez-vous enregistré avec succès !');
-    }
+    return redirect()->route('secretaire.appointments.index')
+                     ->with('success', 'Rendez-vous enregistré avec succès !');
+}
 
     /**
      * Liste pour le médecin connecté.
@@ -100,30 +104,31 @@ class AppointmentController extends Controller
         return view('medecin.appointments', compact('appointments'));
     }
 
+
     public function confirm($id)
-    {
-    // On charge le RDV avec le patient ET son compte utilisateur (User)
-    $appointment = Appointment::with('patient.user')->findOrFail($id);
+{
+    // 1. On charge simplement le patient (qui est un modèle User)
+    $appointment = Appointment::with('patient')->findOrFail($id);
     
     $appointment->status = 'confirmed';
     $appointment->save();
 
-    // On cherche l'email : d'abord chez le patient, sinon chez l'utilisateur lié
-    $destinataire = $appointment->patient->email ?? ($appointment->patient->user->email ?? null);
+    // 2. L'email se trouve directement sur l'objet patient (puisqu'il est dans la table users)
+    $destinataire = $appointment->patient->email ?? null;
 
     if ($destinataire) {
         \Log::info('Envoi en cours vers : ' . $destinataire);
         
+        // Assure-toi que ta classe Mail AppointmentConfirmed est prête
         Mail::to($destinataire)->send(new AppointmentConfirmed($appointment));
         
-        \Log::info('Email enregistré dans le log !');
+        \Log::info(' Email envoyé avec succès !');
     } else {
         \Log::error('Email non envoyé : Pas d\'adresse trouvée pour le Patient ID ' . $appointment->patient_id);
     }
 
     return redirect()->back()->with('success', 'RDV confirmé et email envoyé !');
-    }
-
+}
     public function showPrescription($id)
     {
     // On récupère le rendez-vous AVEC sa prescription (Eager Loading)

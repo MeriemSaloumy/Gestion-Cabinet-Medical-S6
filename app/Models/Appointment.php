@@ -13,7 +13,7 @@ class Appointment extends Model
     protected $fillable = [
         'patient_id', 'medecin_id', 'appointment_date', 'status', 'motif', 'notes'
     ];
-
+   
     protected $casts = [
         'appointment_date' => 'datetime',
     ];
@@ -22,11 +22,12 @@ class Appointment extends Model
         return $this->hasOne(Prescription::class);
     }
 
-    // CORRECTION ICI : Utilise le modèle Patient, pas User
-    public function patient(): BelongsTo
-    {
-        return $this->belongsTo(Patient::class, 'patient_id');
-    }
+   
+    public function patient()
+{
+    // On lie le rendez-vous à la table 'users' via la colonne 'patient_id'
+    return $this->belongsTo(User::class, 'patient_id');
+}
 
     public function medecin(): BelongsTo
     {

@@ -25,7 +25,7 @@
             </div>
 
             <div class="mb-5">
-                <h5 class="mb-3">Patient : <strong>{{ $consultation->patient->nom }} {{ $consultation->patient->prenom }}</strong></h5>
+                <h5 class="mb-3">Patient : <strong>{{ $consultation->patient->name }} </strong></h5>
                 @if($consultation->tension || $consultation->poids)
                     <p class="text-muted small">
                         @if($consultation->tension) Tension : {{ $consultation->tension }} | @endif

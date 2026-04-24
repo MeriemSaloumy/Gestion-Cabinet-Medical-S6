@@ -16,7 +16,7 @@
             <h2>Confirmation de rendez-vous</h2>
         </div>
         <div class="content">
-            <h3>Bonjour {{ $appointment->patient->nom }} {{ $appointment->patient->prenom }},</h3>
+            <h3>Bonjour {{ $appointment->patient->name }} ,</h3>
             <p>Votre rendez-vous a été confirmé :</p>
             <ul>
                 <li><strong>Médecin :</strong> Dr. {{ $appointment->medecin->name }}</li>

@@ -23,8 +23,10 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'nom',     // <--- Zid hadi
+        'nom',     
         'prenom',
+        'cin',
+        'telephone'
     ];
 
     /**

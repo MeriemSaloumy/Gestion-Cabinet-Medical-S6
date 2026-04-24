@@ -23,8 +23,9 @@
                                 </label>
                                 <select name="patient_id" class="form-select border-primary-subtle shadow-sm" required>
                                     <option value="">-- Sélectionner un patient --</option>
+                                   
                                     @foreach($patients as $patient)
-                                        <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}</option>
+                                          <option value="{{ $patient->id }}">{{ $patient->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -36,7 +37,7 @@
                                 <select name="medecin_id" class="form-select border-primary-subtle shadow-sm" required>
                                     <option value="">-- Sélectionner un médecin --</option>
                                     @foreach($medecins as $medecin)
-                                        <option value="{{ $medecin->id }}">Dr. {{ $medecin->name }}</option>
+                                        <option value="{{ $medecin->id }}"> {{ $medecin->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -75,6 +76,15 @@
         </div>
     </div>
 </div>
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 
 <style>
     /* Personnalisation pour un look plus moderne */

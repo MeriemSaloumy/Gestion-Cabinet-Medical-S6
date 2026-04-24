@@ -41,16 +41,28 @@ Route::middleware(['auth'])->prefix('medecin')->name('medecin.')->group(function
     Route::post('/consultation/store', [ConsultationController::class, 'store'])->name('consultations.store');
 });
 
+
 // ROUTES SECRÉTAIRE
 Route::middleware(['auth'])->prefix('secretaire')->group(function () {
     Route::get('/home', [SecretaireController::class, 'index'])->name('secretaire.dashboard');
+    
+    // 1. Déplacer la route "create" AVANT le resource pour qu'elle soit prioritaire
+    Route::get('/appointments/create', [SecretaireController::class, 'appointmentsCreate'])->name('secretaire.appointments.create');
+    
+    // 2. Garder le reste des rendez-vous
     Route::patch('/appointments/{id}/confirm', [AppointmentController::class, 'confirm'])->name('appointments.confirm');
-    Route::resource('appointments', AppointmentController::class)->names('secretaire.appointments');
+    Route::resource('appointments', AppointmentController::class)
+          ->except(['create']) // On dit au resource de NE PAS créer la route 'create'
+          ->names('secretaire.appointments');
+
+    // 3. Gestion des patients
     Route::get('/patients', [SecretaireController::class, 'patientsIndex'])->name('secretaire.patients.index');
     Route::get('/patients/create', [SecretaireController::class, 'patientsCreate'])->name('secretaire.patients.create');
     Route::post('/patients/store', [SecretaireController::class, 'patientsStore'])->name('secretaire.patients.store');
     Route::get('/patients/{id}/edit', [SecretaireController::class, 'patientsEdit'])->name('secretaire.patients.edit');
     Route::put('/patients/{id}', [SecretaireController::class, 'patientsUpdate'])->name('secretaire.patients.update');
+    // Dans web.php, modifie la partie Secrétaire :
+    Route::post('/appointments/store', [SecretaireController::class, 'appointmentsStore'])->name('secretaire.appointments.store');
 });
 
 // ROUTES PATIENT
